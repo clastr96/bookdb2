@@ -1,6 +1,5 @@
 package com.springframeworkguru.bookdb2.dao;
 
-import com.springframeworkguru.bookdb2.domain.Author;
 import com.springframeworkguru.bookdb2.domain.Book;
 import org.springframework.stereotype.Component;
 
@@ -11,9 +10,11 @@ import java.sql.*;
 public class BookDaoImpl implements BookDao {
 
     private final DataSource source;
+    private final AuthorDao authorDao;
 
-    public BookDaoImpl(DataSource dataSource) {
+    public BookDaoImpl(DataSource dataSource, AuthorDao authorDao) {
         this.source = dataSource;
+        this.authorDao = authorDao;
     }
 
     @Override
@@ -82,7 +83,12 @@ public class BookDaoImpl implements BookDao {
             ps.setString(1, book.getTitle());
             ps.setString(2, book.getIsbn());
             ps.setString(3, book.getPublisher());
-            ps.setLong(4, book.getAuthorId());
+
+            if (book.getAuthor() != null) {
+                ps.setLong(4, book.getAuthor().getId());
+            } else {
+                ps.setNull(4, -5);
+            }
             ps.execute();
 
             Statement statement = connection.createStatement();
@@ -120,7 +126,11 @@ public class BookDaoImpl implements BookDao {
             ps.setString(1, book.getTitle());
             ps.setString(2, book.getIsbn());
             ps.setString(3, book.getPublisher());
-            ps.setLong(4, book.getAuthorId());
+
+            if (book.getAuthor() != null) {
+                ps.setLong(4, book.getAuthor().getId());
+            }
+
             ps.setLong(5, book.getId());
             ps.execute();
 
@@ -163,7 +173,7 @@ public class BookDaoImpl implements BookDao {
         book.setTitle(resultSet.getString("title"));
         book.setIsbn(resultSet.getString("isbn"));
         book.setPublisher(resultSet.getString("publisher"));
-        book.setAuthorId(resultSet.getLong("author_id"));
+        book.setAuthor(authorDao.getById(resultSet.getLong(5)));
 
         return book;
     }
